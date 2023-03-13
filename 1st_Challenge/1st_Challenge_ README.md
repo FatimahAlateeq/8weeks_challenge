@@ -24,3 +24,6 @@ Using the schema, I have joined the three tables (datasets) by those keys into o
 
 #### Python:
 - 1st_challenge_answers.ipynb
+
+#### R:
+- 1st_challenge_answers.Rmd

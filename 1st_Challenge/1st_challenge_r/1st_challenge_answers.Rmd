@@ -1,0 +1,248 @@
+## 1st Challenge
+
+### Case Study #1 - Danny's Diner
+
+Find more info here: <https://8weeksqlchallenge.com/case-study-1/>
+
+##### References and links "How to\...":
+
+-   How to sum groupby: <https://stackoverflow.com/questions/1660124/how-to-sum-a-variable-by-group>
+
+-   How to count distinct: <https://stackoverflow.com/questions/31076975/r-group-by-n-distinct-for-summarise>
+
+-   How to filter data: <https://stackoverflow.com/questions/4189807/select-rows-with-min-value-by-group>
+
+-   How to create column based on existing column: <https://stackoverflow.com/questions/39405628/how-do-i-create-a-new-column-based-on-multiple-conditions-from-multiple-columns>
+
+-   How to install library(dplyr): <https://stackoverflow.com/questions/61967808/how-to-install-and-load-dplyr-without-errors>
+
+-   How to replace NA with value in a specific column: <https://stackoverflow.com/questions/19379081/how-to-replace-na-values-in-a-table-for-selected-columns>
+
+-   How to check columns type: <https://www.geeksforgeeks.org/check-data-type-of-each-dataframe-column-in-r/>
+
+-   How to include NA values to the ifelse: <https://stackoverflow.com/questions/24501200/r-handling-na-values-while-doing-a-comparison-ifelse>
+
+-   How to rename aggregate columns: <https://stackoverflow.com/questions/42854777/change-columns-names-of-aggregation-output>
+
+-   How to check R version: <https://stackoverflow.com/questions/11103189/how-to-find-out-which-package-version-is-loaded-in-r>
+
+-   Good source for visualizing: <https://www.data-to-viz.com/>
+
+##### Solved errors:
+
+-   No errors happened.
+
+The R version i use:
+
+```{r}
+print(paste("R", getRversion()))
+print("-------------")
+for (package_name in sort(loadedNamespaces())) {
+    print(paste(package_name, packageVersion(package_name)))
+}
+paste("-------------")
+sessionInfo()
+
+```
+
+### Obtain dataset
+
+Import datasets:
+
+```{r}
+menu_table=read.csv('...\\1st_Challenge\\Datasets\\menu_table.csv') 
+members_table=read.csv('...\\1st_Challenge\\Datasets\\members_table.csv') 
+sales_table=read.csv('...\\1st_Challenge\\Datasets\\sales_table.csv')
+
+menu_table 
+members_table
+sales_table
+```
+
+join tables:
+
+```{r}
+df_sub1<-merge(x = sales_table, y = members_table, by = "customer_id", all.x = T, all.y = T) 
+df<-merge(x = sub1, y = menu_table, by = "product_id", all.x = T, all.y = T)
+df
+```
+
+Check columns types:
+
+```{r}
+str(df)
+```
+
+Change date columns type from "chr" to the date type:
+
+```{r}
+df$order_date <- as.Date(df$order_date,format="%Y-%m-%d")
+df$join_date <- as.Date(df$join_date,format="%Y-%m-%d")
+str(df)
+```
+
+## Answers
+
+#### 1. What is the total amount each customer spent at the restaurant?
+
+```{r}
+q1 <- setNames(aggregate(price ~ customer_id, df, sum),c("customer_id","total_amount_spent"))
+q1
+```
+
+```{r}
+#Plot
+barplot(height=q1$total_amount_spent, names=q1$customer_id,xlab="customer_id", 
+        ylab="total_amount_spent", 
+        main="Total amount spent per customer")
+```
+
+#### 2. How many days has each customer visited the restaurant?
+
+```{r}
+q2 <- setNames(aggregate(order_date ~ customer_id, df, function(x) length(unique(x))),c("customer_id","count_orders_days"))
+q2
+```
+
+```{r}
+#Plot
+barplot(height=q2$count_orders_days, names=q1$customer_id ,xlab="customer_id", 
+        ylab="count_orders_days", 
+        main="Count days of orders per customer")
+```
+
+#### 3. What was the first item from the menu purchased by each customer?
+
+```{r}
+q3 <- df[df$order_date == ave(df$order_date, df$customer_id, FUN=min), ]
+q3 <- q3[c('customer_id', 'order_date', 'product_name')]
+q3
+```
+
+#### 4. What is the most purchased item on the menu and how many times was it purchased by all customers?
+
+```{r}
+q4_sub1 <- aggregate(product_id ~ product_name, df, length)
+q4_sub2 <- max(q4_sub$product_id)
+q4_p1 <- setNames(q4_sub1[q4_sub1$product_id==q4_sub2,],c("product_name","count_orders"))
+q4_p1
+```
+
+#### 5. Which item was the most popular for each customer?
+
+```{r}
+q5_sub1 <- aggregate(product_id ~ customer_id + product_name, df, length)
+q5_sub1 <- q5_sub1[order(q5_sub1$customer_id),]
+q5_sub2 <- aggregate(product_id ~ customer_id , q5_sub1, max)
+q5 <- merge(x = q5_sub2, y = q5_sub1, by = "customer_id") 
+q5 <- q5[q5$product_id.x==q5$product_id.y,] 
+q5 <- setNames(subset(q5, select = -c(2)),c("customer_id","product_name","count_orders"))
+q5
+```
+
+#### 6. Which item was purchased first by the customer after they became a member?
+
+Create column "joined" and add it to the dataset "df", if the customer ordered after join :
+
+```{r}
+df$joined <- with(df, ifelse((join_date <= order_date & !is.na(df$join_date )), "Y", "N"))
+#df <- tidyr::replace_na(df, list(joined="N")) # This line, if i did not use the condetion '& !is.na(df$join_date )' in the previous line. 
+df
+```
+
+Continue:
+
+```{r}
+q6_sub1 <- df[df$joined=="Y",]
+q6_sub2 <- aggregate(order_date ~ customer_id , q6_sub1, min)
+q6 <- merge(x = q6_sub2, y = q6_sub1, by = "order_date")
+q6 <- q6[q6$customer_id.x==q6$customer_id.y,] 
+q6 <- subset(q6, select = -c(3,4))
+q6
+
+```
+
+#### 7. Which item was purchased just before the customer became a member?
+
+```{r}
+q7 <- df[df$joined=="N", ]
+q7 <- q7[q7$order_date == ave(q7$order_date, q7$customer_id, FUN=max), ]
+q7 <- q7[c('customer_id', 'order_date', 'joined')]
+q7 <- q7[order(q7$customer_id),]
+q7 
+
+```
+
+#### 8. What is the total items and amount spent for each member before they became a member?
+
+```{r}
+q8 <- df[df$joined=="N", ]
+q8_sub1 <- aggregate(price ~ customer_id , q8,sum )
+q8_sub2 <- aggregate(price ~ customer_id , q8, length)
+q8 <- setNames(merge(x = q8_sub2, y = q8_sub1, by = "customer_id"),c("customer_id","count_orders","sum_amount_spent"))
+q8
+
+```
+
+```{r}
+#Plot
+plot(q8$count_orders, q8$sum_amount_spent, xlim = c(1, 3.5) ,xlab="count_orders", 
+        ylab="sum_amount_spent", 
+        main="Count orders with total amount spent per customer")
+text(q8$count_orders, q8$sum_amount_spent, labels = q8$customer_id, pos = 4)
+```
+
+#### 9. If each \$1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?
+
+Create column "points" and add it to the dataset "df", depends on the product_name and the price :
+
+```{r}
+df$points <- with(df, ifelse(product_name == "sushi" , price*20, price*10))
+df
+```
+
+Continue:
+
+```{r}
+q9 <- aggregate (points ~ customer_id, df, sum)
+q9
+```
+
+```{r}
+#plot
+barplot(height=q9$points, names=q9$customer_id ,xlab="customer_id", 
+        ylab="Sum points", 
+        main="Sum points per customer")
+```
+
+#### 10. In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?
+
+Create column "join_week_points" and add it to the dataset "df", depends on the first week after join and the points: First, create column "delta" which is the diffirence between the columns order_date and join_date:
+
+```{r}
+df$delta <- (df$order_date-df$join_date)
+df
+```
+
+Second, continue creating "join_week_points" column:
+
+```{r}
+q10 <- df[df$delta<=6 & df$delta<=6, ]
+df$join_week_points <- with(df, ifelse((df$delta<=6 & df$delta>=0 & !is.na(df$delta)), points*2, points))
+df
+```
+
+Continue:
+
+```{r}
+q10 <- aggregate(join_week_points ~ customer_id , df,sum )
+q10 <- setNames(q10[q10$customer_id %in% c("A","B"),],c("customer_id","total_points"))
+q10
+```
+
+```{r}
+#Plot
+barplot(height=q10$total_points, names=q10$customer_id ,xlab="customer_id", 
+        ylab="Total points", 
+        main="Total points of the customers A and B")
+```
