@@ -23,7 +23,7 @@ where TABLE_SCHEMA = 'pizza_runner'
 - #### Start clening:
 
 Table: runner_orders:
->- Column *pickup_time*:
+- Column *pickup_time*:
  - convert the type from *varchar* to *timestamp*.
    1.  replace 'null' with null by updating the table.
  ```SQL
@@ -106,7 +106,7 @@ SET SQL_SAFE_UPDATES = 1; -- To able safe update mode again.
 ```
 
 Table: customer_orders:
->- Columns *exclusions, extras*:
+- Columns *exclusions, extras*:
  - Replace all ' ' and "nall" values with original null values of MySQL.
  ```SQL
 USE pizza_runner;
@@ -117,9 +117,9 @@ SET SQL_SAFE_UPDATES = 1; -- To able safe update mode.
 ```
 
 Table: pizza_recipes:
->- Column *toppings*:
+- Column *toppings*:
   - Separate 'toppings' and convert column type from *varchar* to *int*.
-   ```SQL
+```SQL
   use pizza_runner;
  DELIMITER $$ -- This function is to split the statment by commas.
  CREATE FUNCTION strSplit(x VARCHAR(6500), delim VARCHAR(12), pos INTEGER)
@@ -162,15 +162,15 @@ Table: pizza_recipes:
 ## Answers:
 - #### A. Pizza Metrics
 1. How many pizzas were ordered?
->```SQL
+```SQL
 select count(*) as pizza_counter from customer_orders
->```
+```
 | pizza_counter |
 |---------------|
 | 14            |
 
 2. How many unique customer orders were made?
->```SQL
+```SQL
 create view view1 as -- Create view
 with customer_orders1 as(select *, count(*) as duplicates
 from customer_orders group by 1,2,3,4,5,6) -- To safe duplicates from the 'join' effects.
@@ -184,18 +184,18 @@ right join runner_orders r on c.order_id=r.order_id;
 select count(distinct order_id) as unique_orders_counter_Uncancelled
 from view1
 where cancellation='Uncancelled'
->```
+```
 | unique_orders_counter_Uncancelled |
 |-----------------------|
 | 8                     |
 
 3. How many successful orders were delivered by each runner?
->```SQL
+```SQL
 select runner_id, count(distinct order_id) as orders_counter
 from view1
 where cancellation='Uncancelled'
 group by 1
->```
+```
 | runner_id | orders_counter |
 |-----------|---------------|
 | 1         | 4             |
@@ -203,27 +203,27 @@ group by 1
 | 3         | 1             |
 
 4. How many of each type of pizza was delivered?
->```SQL
+```SQL
 select p.pizza_name, sum(v.duplicates) as pizza_counter -- Remember the 'duplicates' column?
 from view1 v
 join pizza_names p on v.pizza_id=p.pizza_id
 where cancellation='Uncancelled'
 group by 1
->```
+```
 | pizza_name | pizza_counter |
 |------------|---------------|
 | Meatlovers | 9             |
 | Vegetarian | 3             |
 
 5. How many Vegetarian and Meatlovers were ordered by each customer?
->```SQL
+```SQL
 select v.customer_id, p.pizza_name, sum(v.duplicates) as pizza_counter -- Remember the duplicates column?
 from view1 v
 join pizza_names p on v.pizza_id=p.pizza_id
 where cancellation!='Customer Cancellation'
 group by 1,2
 order by 1
->```
+```
 | customer_id | pizza_name | pizza_counter |
 |-------------|------------|---------------|
 | 101         | Meatlovers | 2             |
@@ -236,19 +236,19 @@ order by 1
 | 105         | Vegetarian | 1             |
 
 6. What was the maximum number of pizzas delivered in a single order?
->```SQL
+```SQL
 select max(pizza_counter) max_pizza
 from (select v.order_id, sum(v.duplicates) as pizza_counter -- Remember the duplicates column?
 from view1 v
 where cancellation='Uncancelled'
 group by 1) sub
->```
+```
 | max_pizza |
 |-----------|
 | 3         |
 
 7. For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
->```SQL
+```SQL
 SELECT
     v.customer_id,
     CASE
@@ -270,7 +270,7 @@ FROM
 WHERE
     cancellation = 'Uncancelled'
 GROUP BY 1
->```
+```
 | customer_id | changes | no_changes |
 |-------------|---------|------------|
 | 101         |         | 2          |
@@ -280,19 +280,19 @@ GROUP BY 1
 | 105         | 1       |            |
 
 8. How many pizzas were delivered that had both exclusions and extras?
->```SQL
+```SQL
 SELECT COUNT(v.order_id) pizza_counter
 FROM
     view1 v
 WHERE
     cancellation = 'Uncancelled' and v.extras IS NOT NULL and v.exclusions IS NOT NULL
->```
+```
 | pizza_counter |
 |---------------|
 | 1             |
 
 9. What was the total volume of pizzas ordered for each hour of the day?
->```sql
+```sql
 SELECT
     hour(order_time) AS hour_order,
     COUNT(order_id) pizza_counter
@@ -300,7 +300,7 @@ FROM
     view1
 GROUP BY 1
 ORDER BY 1
->```
+```
 | hour_order | pizza_counter |
 |------------|---------------|
 | 11         | 1             |
@@ -311,7 +311,7 @@ ORDER BY 1
 | 23         | 3             |
 
 10. What was the volume of orders for each day of the week?
->```SQL
+```SQL
 SELECT
     dayname(order_time) AS day_of_week_order,
     COUNT(order_id) pizza_counter
@@ -319,7 +319,7 @@ FROM
     view1
 GROUP BY 1
 ORDER BY 1
->```
+```
 | day_of_week_order | pizza_counter |
 |-------------------|---------------|
 | Friday            | 1             |
@@ -329,14 +329,14 @@ ORDER BY 1
 
 - #### B. Runner and Customer Experience
 1. How many runners signed up for each 1 week period? (i.e. week starts 2021-01-01)
->```SQL
+```SQL
 SELECT
     WEEK(registration_date) AS _week,
     COUNT(runner_id) AS runners_counter
 FROM
     runners
 GROUP BY 1
->```
+```
 | _week | runners_counter |
 |-------|-----------------|
 | 0     | 1               |
@@ -344,7 +344,7 @@ GROUP BY 1
 | 2     | 1               |
 
 2. What was the average time in minutes it took for each runner to arrive at the Pizza Runner HQ to pickup the order?
->```SQL
+```SQL
 SELECT
     runner_id, AVG(difference) AS avg_minutes_took_to_pickup
 FROM
@@ -358,7 +358,7 @@ FROM
     WHERE
         cancellation = 'Uncancelled') sub
 GROUP BY 1
->```
+```
 | runner_id | avg_minutes_took_to_pickup |
 |-----------|----------------------------|
 | 1         | 14.0000                    |
@@ -366,7 +366,7 @@ GROUP BY 1
 | 3         | 10.0000                    |
 
 3. Is there any relationship between the number of pizzas and how long the order takes to prepare?
->```SQL
+```SQL
 SELECT
     order_id,
     SUM(duplicates) count_orders,
@@ -379,7 +379,7 @@ WHERE
     cancellation = 'Uncancelled'
 GROUP BY 1
 ORDER BY 2 DESC
->```
+```
 Yes, there is a relationship between the number of pizzas and preparing time. From this result I see preparing one pizza takes less time than more pizzas in one order. order_id:8 is an outlier.
 | order_id | count_orders | prepare_minutes |
 |----------|--------------|-----------------|
@@ -393,7 +393,7 @@ Yes, there is a relationship between the number of pizzas and preparing time. Fr
 | 8        | 1            | 20              |
 
 4. What was the average distance travelled for each customer?
->```SQL
+```SQL
 SELECT
     customer_id, AVG(distance) AS avg_distance
 FROM
@@ -402,7 +402,7 @@ FROM
     FROM
         view1) sub
 GROUP BY 1
->```
+```
 | customer_id | avg_distance       |
 |-------------|--------------------|
 | 101         | 20                 |
@@ -412,18 +412,18 @@ GROUP BY 1
 | 105         | 25                 |
 
 5. What was the difference between the longest and shortest delivery times for all orders?
->```SQL
+```SQL
 SELECT
     MAX(duration) - MIN(duration) AS difference_minutes
 FROM
     view1
->```
+```
 | difference_minutes |
 |--------------------|
 | 30                 |
 
 6. What was the average speed for each runner for each delivery and do you notice any trend for these values?
->```SQL
+```SQL
 SELECT
     sub1.*, sub2.avg_speed_km_per_hour_by_runner
 FROM
@@ -448,7 +448,7 @@ FROM
         cancellation = 'Uncancelled'
     GROUP BY 1) sub2 ON sub1.runner_id = sub2.runner_id
 ORDER BY 1
->```
+```
 From this result, I do not think there is trend for these values. But runner_id:2 has strange speed with that same distances values, he could has speeding violations.
 | runner_id | order_id | pizzas_counter | distance | duration | speed_km_per_hour | avg_speed_km_per_hour_by_runner |
 |-----------|----------|----------------|----------|----------|-------------------|---------------------------------|
@@ -462,11 +462,11 @@ From this result, I do not think there is trend for these values. But runner_id:
 | 3         | 5        | 1              | 10       | 15       | 40                | 40                              |
 
 7. What is the successful delivery percentage for each runner?
->```SQL
+```SQL
 select runner_id, concat(round(sum(case when cancellation='Uncancelled' then duplicates end )*100/sum(duplicates),1),'%') as percentage
 from view1
 group by 1
->```
+```
 | runner_id | percentage |
 |-----------|------------|
 | 1         | 100.0%     |
@@ -475,7 +475,7 @@ group by 1
 
 - #### C. Ingredient Optimisation
 1. What are the standard ingredients for each pizza?
->```SQL
+```SQL
 SELECT
     n.pizza_name, GROUP_CONCAT(' ',t.topping_name) AS toppins_recipe -- The space is not important.
 FROM
@@ -485,14 +485,14 @@ FROM
         JOIN
     pizza_toppings t ON r.toppings = t.topping_id
 GROUP BY 1
->```
+```
 | pizza_name | toppins_recipe |
 |------------|----------------|
 | Meatlovers |  Bacon, BBQ Sauce, Beef, Cheese, Chicken, Mushrooms, Pepperoni, Salami |
 | Vegetarian |  Cheese, Mushrooms, Onions, Peppers, Tomatoes, Tomato Sauce |
 
 2. What was the most commonly added extra?
->```SQL
+```SQL
 SELECT
     topping_name, COUNT(findings) occurs
 FROM
@@ -510,7 +510,7 @@ FROM
         v.extras IS NOT NULL
     HAVING FIND_IN_SET(t.topping_id, REPLACE(v.extras, ' ', '')) != 0) AS sub
 GROUP BY 1
->```
+```
 | topping_name | occurs |
 |--------------|--------|
 | Bacon        | 3      |
@@ -519,7 +519,7 @@ GROUP BY 1
 
 
 3. What was the most common exclusion?
->```SQL
+```SQL
 CREATE DEFINER=`root`@`localhost` PROCEDURE `BadTableToGoodTable`()
 BEGIN -- Edit the BadTableToGoodTable() procedure.
   DECLARE i INTEGER;
@@ -542,8 +542,8 @@ SET SQL_SAFE_UPDATES = 0; -- To disable safe update mode.
 UPDATE separate_extras_from_costomer_orders SET extras = replace(extras,' ',''); -- Remove spaces before convert column type.
 SET SQL_SAFE_UPDATES = 1; -- To able safe update mode again.
 Alter table separate_extras_from_costomer_orders MODIFY COLUMN extras int; -- Convert column type to int.
->```
->```SQL
+```
+```SQL
 call BadTableToGoodTable(); -- Call it once!!!!!!!!
 select topping_name, count(*) extras_counter
 from
@@ -556,7 +556,7 @@ join pizza_toppings t on ce.extras=t.topping_id
 where ce.extras=t.topping_id
 ) as sub
 group by 1
->```
+```
 | topping_name | extras_counter |
 |--------------|----------------|
 | Bacon        | 4              |
@@ -568,7 +568,7 @@ group by 1
  - Meat Lovers - Extra Bacon
  - Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers
     - Here I indexed records per order_id using *ROW_NUMBER()*, and remove 'duplicates' column. I think this way is better way to safe duplicate records than the 'duplicates' column idea.
-    ```SQL
+```SQL
     create view view2 as(
 SELECT  c.order_id, ROW_NUMBER() OVER (partition by c.order_id order BY c.order_id) as  index_orders, c.customer_id, c.pizza_id, c.exclusions, c.extras, c.order_time, r.pickup_time, r.distance, r.duration, r.cancellation
 FROM customer_orders c
@@ -578,8 +578,9 @@ SELECT  c.order_id, ROW_NUMBER() OVER (partition by c.order_id order BY c.order_
 FROM customer_orders c
 right join runner_orders r on c.order_id=r.order_id)
 ```
-    - Also, I separated *exclusions* column using stored procedure:
-    ```SQL
+- Also, I separated *exclusions* column using stored procedure:
+
+```SQL
     CREATE DEFINER=`root`@`localhost` PROCEDURE `BadTableToGoodTable`()
 BEGIN
   DECLARE i INTEGER;
@@ -601,7 +602,7 @@ BEGIN
 END -- And then call it by -- call pizza_runner.BadTableToGoodTable();
 ```
 
- >```SQL
+ ```SQL
  with t1 as (select order_id, index_orders, GROUP_CONCAT(extras_names) as extras_names from (select distinct v.order_id, v.index_orders ,st.extras,pt.topping_name as extras_names
  from view2 v
  join pizza_names pn on v.pizza_id=pn.pizza_id
@@ -626,7 +627,7 @@ END -- And then call it by -- call pizza_runner.BadTableToGoodTable();
  left join t1 on v.order_id=t1.order_id and v.index_orders=t1.index_orders
  left join t2 on v.order_id=t2.order_id and v.index_orders=t2.index_orders
  order by 1
- >```
+ ```
  | order_id | index_orders | customer_id | pizza_id | order_item                                                          | order_time          |
 |----------|--------------|-------------|----------|---------------------------------------------------------------------|---------------------|
 | 1        | 1            | 101         | 1        | Meatlovers                                                          | 2020-01-01 18:05:02 |
@@ -646,7 +647,7 @@ END -- And then call it by -- call pizza_runner.BadTableToGoodTable();
 
 5. Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any relevant ingredients
  - For example: "Meat Lovers: 2xBacon, Beef, ... , Salami"
->```SQL
+```SQL
 with t1 as (
 select distinct c1.id, c1.order_id, pn.pizza_name, c1.pizza_id, pt.topping_name, pt.topping_id , case when pt.topping_id in (select extras from separate_extras_from_c1 where id=c1.id) then'2x' else '' end as doupled-- ,case when cc1.exclusions=pt.topping_id then'0x'end,case when tc1.extras=pt.topping_id then tc1.extras end
 from customer_orders1 c1
@@ -661,7 +662,7 @@ select id as row_number_, order_id, pizza_id,  replace(concat(pizza_name,': ',gr
 from t1
 group by 1,2,3
 order by 1
->```
+```
 | row_number_ | order_id | pizza_id | ingredient                                                                    |
 |-------------|----------|----------|-------------------------------------------------------------------------------|
 | 1           | 1        | 1        | Meatlovers: Bacon\BBQ Sauce\Beef\Cheese\Chicken\Mushrooms\Pepperoni\Salami.   |
@@ -681,7 +682,7 @@ order by 1
 
 
 6. What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
->```SQL
+```SQL
 with t1 as (
 select distinct c1.id,r.cancellation, c1.order_id, pn.pizza_name, c1.pizza_id, pt.topping_name, pt.topping_id , case when pt.topping_id in (select extras from separate_extras_from_c1 where id=c1.id) then'2x' else '' end as doupled
 from customer_orders1 c1
@@ -698,7 +699,7 @@ from t1
 where cancellation='Uncancelled'
 group by 1
 order by 2 desc
->```
+```
 | topping_name | occurs |
 |--------------|--------|
 | Mushrooms    | 11     |
@@ -716,7 +717,7 @@ order by 2 desc
 
 - #### D. Pricing and Ratings
 1. If a Meat Lovers pizza costs $12 and Vegetarian costs $10 and there were no charges for changes - how much money has Pizza Runner made so far if there are no delivery fees?
->```SQL
+```SQL
 SELECT
     SUM(cost) revenues
 FROM
@@ -731,7 +732,7 @@ FROM
         view2
     WHERE
         cancellation = 'Uncancelled') AS sub
->```
+```
 | revenues |
 |----------|
 | 138      |
@@ -739,7 +740,7 @@ FROM
 2. What if there was an additional $1 charge for any pizza extras?
  - Add cheese is $1 extra
 
- >```SQL
+ ```SQL
 SELECT
     SUM(cost_with_extras_charge) revenues
 FROM
@@ -766,14 +767,14 @@ FROM
     LEFT JOIN separate_extras_from_c1 ct1 ON c1.id = ct1.id
     WHERE
         cancellation = 'Uncancelled') AS sub1) AS sub2
- >```
+ ```
 | revenues |
 |----------|
 | 154      |
 
 3. The Pizza Runner team now wants to add an additional ratings system that allows customers to rate their runner, how would you design an additional table for this new dataset - generate a schema for this new table and insert your own data for ratings for each successful customer order between 1 to 5.
  - First, I created a new table, then created a procedure to insert the fake ratings into it.
- >```SQL
+ ```SQL
  create table if not exists customer_ratings (select v.order_id,v.index_orders,v.customer_id,r.runner_id
 from view2 v
 left join runner_orders r on v.order_id=r.order_id
@@ -796,7 +797,7 @@ select * from customer_ratings;
 end;
 // DELIMITER
 call customer_rates_order_and_runner (1,101,5,5,'good'); -- Usage the stored procedure. This is an example.
->```
+```
 Then this is the output of my fake records:
 | order_id | index_orders | customer_id | runner_id | rating_order | rating_runner | average_rate | comment_                                                         |
 |----------|--------------|-------------|-----------|--------------|---------------|--------------|------------------------------------------------------------------|
@@ -816,7 +817,7 @@ Then this is the output of my fake records:
 4. Using your newly generated table - can you join all of the information together to form a table which has the following information for successful deliveries?
  - *customer_id, order_id, runner_id, rating, order_time, pickup_time,* Time between order and pickup, Delivery duration, Average speed, Total number of pizzas.
 
- >```SQL
+ ```SQL
 select *,  count(*) as total_number_of_pizzas
 from (
 select distinct c.order_id,c.customer_id, c.index_orders, r.runner_id, cr.average_rate as average_rating, c.order_time, r.pickup_time,
@@ -827,7 +828,7 @@ left join customer_ratings cr on c.order_id=cr.order_id
 where r.cancellation='Uncancelled'
 order by 1) as sub
 group by 1
- >```
+ ```
 | order_id | customer_id | index_orders | runner_id | average_rating | order_time          | pickup_time         | prepare_minutes | delivery_duration | speed_km_per_hour | total_number_of_pizzas |
 |----------|-------------|--------------|-----------|----------------|---------------------|---------------------|-----------------|-------------------|-------------------|------------------------|
 | 1        | 101         | 1            | 1         | 5              | 2020-01-01 18:05:02 | 2020-01-01 18:15:34 | 10              | 32                | 37.5              | 1                      |
@@ -841,7 +842,7 @@ group by 1
 
 
 5. If a Meat Lovers pizza was $12 and Vegetarian $10 fixed prices with no cost for extras and each runner is paid $0.30 per kilometre traveled - how much money does Pizza Runner have left over after these deliveries?
->```SQL
+```SQL
 select round(sum(pizza_cost)- sum(distance*0.3),2) as profit,sum(pizza_cost) as revenues, round(sum(distance*0.3),2) as travele_cost  -- 'travele_cost' i do the summation per order not per pizza
 from(
 SELECT  distinct c.order_id, c.index_orders, r.runner_id, sum(CASE WHEN pizza_id = 1 THEN 12 WHEN pizza_id = 2 THEN 10 END) as pizza_cost, r.distance
@@ -849,7 +850,7 @@ from view2 c
 left join runner_orders r on c.order_id=r.order_id
 WHERE r.cancellation = 'Uncancelled'
 group by 1) AS sub1
->```
+```
 | profit | revenues | travele_cost |
 |--------|----------|--------------|
 | 94.44  | 138      | 43.56        |
