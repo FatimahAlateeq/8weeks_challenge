@@ -27,12 +27,12 @@ runnes_not_clean.csv
 
 
 #### MySQL:
-2nd_challenge_EER_Diagram.png    
+2nd_challenge_EER_Diagram.png
 2nd_challenge_sql_queries_answers.md
 2nd_challenge_create_schema.sql
 
 
 #### Python:
-
+2nd_challenge_answers.ipynb
 
 #### R:
